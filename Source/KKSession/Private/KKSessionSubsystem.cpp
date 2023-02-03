@@ -6,15 +6,17 @@
 
 #define SESSION_NAME_KEY TEXT("SESSION_NAME_KEY")
 
-void UKKSessionSubsystem::KK_CreateSession(UObject*obj,FName SessionName,FKKOnlineSessionSettings SessionSettings,FKKOnCreateSessionFinish OnCreateSessionFinish)
+/*************************************** create *************************************/
+void UKKSessionSubsystem::KK_CreateSession(UObject*obj,FName SessionName,FKKOnlineSessionSettings SessionSettings,FKKOnSessionExec OnCreateSessionFinish)
 {
 	IOnlineSubsystem * Subsystem = Online::GetSubsystem(obj->GetWorld());
 	check(Subsystem!=nullptr)
 	IOnlineSessionPtr OnlineSessionPtr = Subsystem->GetSessionInterface();
 	
 	// OnlineSessionPtr->AddOnCreateSessionCompleteDelegate_Handle();
-	OnlineSessionPtr->OnCreateSessionCompleteDelegates.AddLambda([&OnlineSessionPtr,OnCreateSessionFinish](FName SessionName,bool bSuccess)
+	OnlineSessionPtr->OnCreateSessionCompleteDelegates.AddLambda([OnlineSessionPtr,OnCreateSessionFinish,this](FName SessionName,bool bSuccess)
 	{
+		CacheSessionName = SessionName;
 		UE_LOG(LogTemp,Warning,TEXT("Create %s : %s"),*SessionName.ToString(),bSuccess?TEXT("Success"):TEXT("Failed"));
 		OnlineSessionPtr->DumpSessionState();
 		UE_LOG(LogTemp,Warning,TEXT("/****************************************************************************/"));
@@ -25,6 +27,9 @@ void UKKSessionSubsystem::KK_CreateSession(UObject*obj,FName SessionName,FKKOnli
 	OnlineSessionPtr->CreateSession(0,SessionName,SessionSettings.OnlineSessionSettings);
 }
 
+
+
+/*************************************** find *************************************/
 void UKKSessionSubsystem::KK_FindSession(UObject* obj)
 {
 	IOnlineSubsystem * Subsystem = Online::GetSubsystem(obj->GetWorld());
@@ -42,6 +47,10 @@ void UKKSessionSubsystem::KK_FindSession(UObject* obj)
 	OnlineSessionPtr->FindSessions(0,SearchedSession.ToSharedRef());
 }
 
+
+
+
+/*************************************** join *************************************/
 void UKKSessionSubsystem::KK_JoinSession(UObject* obj)
 {
 	IOnlineSubsystem * Subsystem = Online::GetSubsystem(obj->GetWorld());
@@ -55,6 +64,8 @@ void UKKSessionSubsystem::KK_JoinSession(UObject* obj)
 
 	OnlineSessionPtr->OnJoinSessionCompleteDelegates.AddLambda([this,OnlineSessionPtr,obj](FName SessionName, EOnJoinSessionCompleteResult::Type Type)
 	{
+		// save the session name to delete
+		CacheSessionName = SessionName;
 		UE_LOG(LogTemp,Warning,TEXT("Join Session [%s] [%s]"),*SessionName.ToString(),*KK_GetJoinSessionResult(Type));
 		if (Type == EOnJoinSessionCompleteResult::Success)
 		{
@@ -70,6 +81,26 @@ void UKKSessionSubsystem::KK_JoinSession(UObject* obj)
 	FString SessionName;
 	SearchedSession->SearchResults[0].Session.SessionSettings.Get(SESSION_NAME_KEY,SessionName);
 	OnlineSessionPtr->JoinSession(0,FName(*SessionName),SearchedSession->SearchResults[0]);
+}
+
+
+
+/*************************************** destory *************************************/
+void UKKSessionSubsystem::KK_DestorySession(UObject* obj,FKKOnSessionExec OnDestorySessionFinish)
+{
+	IOnlineSubsystem * Subsystem = Online::GetSubsystem(obj->GetWorld());
+	check(Subsystem!=nullptr)
+	IOnlineSessionPtr OnlineSessionPtr = Subsystem->GetSessionInterface();
+
+	OnlineSessionPtr->OnDestroySessionCompleteDelegates.AddLambda([OnDestorySessionFinish](FName SessionName,bool bSuccess)
+	{
+		UE_LOG(LogTemp,Warning,TEXT("Destory [%s] [%s]"),*SessionName.ToString(),bSuccess?TEXT("Success"):TEXT("Failed"));
+		OnDestorySessionFinish.ExecuteIfBound();
+	});
+
+	DumpSession(OnlineSessionPtr->GetNamedSession(CacheSessionName));
+	
+	OnlineSessionPtr->DestroySession(CacheSessionName);
 }
 
 /*************************************** helper *************************************/

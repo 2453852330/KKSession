@@ -12,7 +12,7 @@
  * 
  */
 
-DECLARE_DYNAMIC_DELEGATE(FKKOnCreateSessionFinish);
+DECLARE_DYNAMIC_DELEGATE(FKKOnSessionExec);
 
 UCLASS()
 class KKSESSION_API UKKSessionSubsystem : public UGameInstanceSubsystem
@@ -22,22 +22,28 @@ class KKSESSION_API UKKSessionSubsystem : public UGameInstanceSubsystem
 public:
 	/*************************************** create *************************************/
 	UFUNCTION(BlueprintCallable,Category="KKSession",meta=(WorldContext=obj))
-	void KK_CreateSession(UObject*obj,FName SessionName,FKKOnlineSessionSettings SessionSettings,FKKOnCreateSessionFinish OnCreateSessionFinish);
+	void KK_CreateSession(UObject*obj,FName SessionName,FKKOnlineSessionSettings SessionSettings,FKKOnSessionExec OnCreateSessionFinish);
 
 	
-	
-
-	
-
+	/*************************************** find *************************************/
 	UFUNCTION(BlueprintCallable,Category="KKSession",meta=(WorldContext=obj))
 	void KK_FindSession(UObject*obj);
 
 	TSharedPtr<FOnlineSessionSearch> SearchedSession;
 
+	/*************************************** join *************************************/
 	UFUNCTION(BlueprintCallable,Category="KKSession",meta=(WorldContext=obj))
 	void KK_JoinSession(UObject*obj);
 
+	/*************************************** destory *************************************/
+	UFUNCTION(BlueprintCallable,Category="KKSession",meta=(WorldContext=obj))
+	void KK_DestorySession(UObject*obj,FKKOnSessionExec OnDestorySessionFinish);
 
+
+private:
 	/*************************************** helper *************************************/
 	FString KK_GetJoinSessionResult(EOnJoinSessionCompleteResult::Type Type);
+
+	/*************************************** cache info *************************************/
+	FName CacheSessionName;
 };
