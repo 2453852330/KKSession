@@ -3,6 +3,8 @@
 
 #include "KKSessionSubsystem.h"
 #include "OnlineSubsystemUtils.h"
+#include "GameFramework/GameModeBase.h"
+#include "GameFramework/GameSession.h"
 
 #define SESSION_NAME_KEY TEXT("SESSION_NAME_KEY")
 
@@ -22,6 +24,8 @@ void UKKSessionSubsystem::KK_CreateSession(UObject*obj,FName SessionName,FKKOnli
 		UE_LOG(LogTemp,Warning,TEXT("/****************************************************************************/"));
 		OnCreateSessionFinish.ExecuteIfBound();
 	});
+
+	
 	
 	SessionSettings.OnlineSessionSettings.Set(SESSION_NAME_KEY,SessionName.ToString(),EOnlineDataAdvertisementType::ViaOnlineServiceAndPing);
 	OnlineSessionPtr->CreateSession(0,SessionName,SessionSettings.OnlineSessionSettings);
@@ -98,8 +102,13 @@ void UKKSessionSubsystem::KK_DestorySession(UObject* obj,FKKOnSessionExec OnDest
 		OnDestorySessionFinish.ExecuteIfBound();
 	});
 
-	DumpSession(OnlineSessionPtr->GetNamedSession(CacheSessionName));
-	
+	// DumpSession(OnlineSessionPtr->GetNamedSession(CacheSessionName));
+
+	// this return [GameSession]
+	UE_LOG(LogTemp,Warning,TEXT("try find session name in player state : %s"),*(GetWorld()->GetFirstPlayerController()->PlayerState->SessionName.ToString()));
+	// this return [GameSession]
+	UE_LOG(LogTemp,Warning,TEXT("try find session name in game session : %s"),*(GetWorld()->GetAuthGameMode()->GameSession->SessionName.ToString()));
+	// 
 	OnlineSessionPtr->DestroySession(CacheSessionName);
 }
 

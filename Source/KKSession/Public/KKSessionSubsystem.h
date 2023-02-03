@@ -40,6 +40,9 @@ public:
 	void KK_DestorySession(UObject*obj,FKKOnSessionExec OnDestorySessionFinish);
 
 
+	/*************************************** travel *************************************/
+	
+	
 private:
 	/*************************************** helper *************************************/
 	FString KK_GetJoinSessionResult(EOnJoinSessionCompleteResult::Type Type);

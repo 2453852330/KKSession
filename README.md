@@ -14,3 +14,11 @@ ue4 session bp lib
 同时因为Session代理使用Lambda,导致无法清除代理,每执行一次都会添加重复的执行函数;
 ````
 
+## 3:
+
+```
+尝试寻找如何获取当前的SessionName,发现并没有获取方案;目前只能自行缓存;
+使用 ServerTravel MapName 进行关卡切换,一切正常;
+Lambda绑定待解决;
+```
+
