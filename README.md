@@ -29,3 +29,10 @@ Lambda绑定待解决;
 同时修复了主机Session断开,客户端Session依旧存在的问题;
 ```
 
+## 5:
+
+```
+修改所有WorldContext为PlayerController,同时完善CreateSession,支持添加自定义参数;
+待完善 FindSession
+```
+

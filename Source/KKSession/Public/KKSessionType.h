@@ -75,3 +75,13 @@ struct FKKOnlineSessionSettings
 	
 	FOnlineSessionSettings OnlineSessionSettings;
 };
+
+USTRUCT(BlueprintType)
+struct FKKOnlineSessionSearchResult
+{
+	GENERATED_USTRUCT_BODY()
+	FOnlineSessionSearchResult SearchResult;
+
+	FKKOnlineSessionSearchResult(){}
+	FKKOnlineSessionSearchResult(FOnlineSessionSearchResult InOnlineSessionSearchResult):SearchResult(InOnlineSessionSearchResult){}
+};

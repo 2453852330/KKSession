@@ -12,7 +12,9 @@
  * 
  */
 
-DECLARE_DYNAMIC_DELEGATE(FKKOnSessionExec);
+DECLARE_DYNAMIC_DELEGATE_OneParam(FKKOnSessionExec,bool,bSuccess);
+
+DECLARE_DYNAMIC_DELEGATE_TwoParams(FKKOnFindSessionExec,bool,bSuccess,const TArray<FKKOnlineSessionSearchResult> &,FindSessionList);
 
 UCLASS()
 class KKSESSION_API UKKSessionSubsystem : public UGameInstanceSubsystem
@@ -21,28 +23,26 @@ class KKSESSION_API UKKSessionSubsystem : public UGameInstanceSubsystem
 
 public:
 	/*************************************** create *************************************/
-	UFUNCTION(BlueprintCallable,Category="KKSession",meta=(WorldContext=obj))
-	void KK_CreateSession(UObject*obj,FName SessionName,FKKOnlineSessionSettings SessionSettings,FKKOnSessionExec OnCreateSessionFinish);
+	UFUNCTION(BlueprintCallable,Category="KKSession",meta=(AutoCreateRefTerm="CustomData"))
+	void KK_CreateSession(APlayerController * PlayerController ,FName SessionName,TMap<FName,FString> CustomData ,FKKOnlineSessionSettings SessionSettings,FKKOnSessionExec OnCreateSessionFinish);
 
 	
-	
 	/*************************************** find *************************************/
-	UFUNCTION(BlueprintCallable,Category="KKSession",meta=(WorldContext=obj))
-	void KK_FindSession(UObject*obj);
+	UFUNCTION(BlueprintCallable,Category="KKSession")
+	void KK_FindSession(APlayerController * PlayerController,FKKOnFindSessionExec OnFindSessionFinish);
 
 	TSharedPtr<FOnlineSessionSearch> SearchedSession;
 
 	/*************************************** join *************************************/
-	UFUNCTION(BlueprintCallable,Category="KKSession",meta=(WorldContext=obj))
-	void KK_JoinSession(UObject*obj);
+	UFUNCTION(BlueprintCallable,Category="KKSession")
+	void KK_JoinSession(APlayerController * PlayerController,FKKOnSessionExec OnJoinSessionFinish);
 
 	/*************************************** destory *************************************/
-	UFUNCTION(BlueprintCallable,Category="KKSession",meta=(WorldContext=obj))
-	void KK_DestorySession(UObject*obj,FKKOnSessionExec OnDestorySessionFinish);
+	UFUNCTION(BlueprintCallable,Category="KKSession")
+	void KK_DestorySession(APlayerController * PlayerController,FKKOnSessionExec OnDestorySessionFinish);
 
 
 	/*************************************** travel *************************************/
-	
 	
 private:
 	/*************************************** helper *************************************/

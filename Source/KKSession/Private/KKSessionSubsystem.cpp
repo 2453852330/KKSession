@@ -9,9 +9,14 @@
 #define SESSION_NAME_KEY TEXT("SESSION_NAME_KEY")
 
 /*************************************** create *************************************/
-void UKKSessionSubsystem::KK_CreateSession(UObject*obj,FName SessionName,FKKOnlineSessionSettings SessionSettings,FKKOnSessionExec OnCreateSessionFinish)
+void UKKSessionSubsystem::KK_CreateSession(APlayerController * PlayerController,FName SessionName,TMap<FName,FString> CustomData,FKKOnlineSessionSettings SessionSettings,FKKOnSessionExec OnCreateSessionFinish)
 {
-	IOnlineSubsystem * Subsystem = Online::GetSubsystem(obj->GetWorld());
+	if (!PlayerController)
+	{
+		OnCreateSessionFinish.ExecuteIfBound(false);
+		return;
+	}
+	IOnlineSubsystem * Subsystem = Online::GetSubsystem(PlayerController->GetWorld());
 	check(Subsystem!=nullptr)
 	IOnlineSessionPtr OnlineSessionPtr = Subsystem->GetSessionInterface();
 	
@@ -20,33 +25,47 @@ void UKKSessionSubsystem::KK_CreateSession(UObject*obj,FName SessionName,FKKOnli
 	// OnlineSessionPtr->AddOnCreateSessionCompleteDelegate_Handle();
 	OnlineSessionPtr->OnCreateSessionCompleteDelegates.AddLambda([OnlineSessionPtr,OnCreateSessionFinish,this](FName SessionName,bool bSuccess)
 	{
+		// cache session name 
 		CacheSessionName = SessionName;
-		UE_LOG(LogTemp,Warning,TEXT("Create %s : %s"),*SessionName.ToString(),bSuccess?TEXT("Success"):TEXT("Failed"));
-		OnlineSessionPtr->DumpSessionState();
-		UE_LOG(LogTemp,Warning,TEXT("/****************************************************************************/"));
-		OnCreateSessionFinish.ExecuteIfBound();
+		OnCreateSessionFinish.ExecuteIfBound(bSuccess);
 	});
-	
+
+	// add custom data
 	SessionSettings.OnlineSessionSettings.Set(SESSION_NAME_KEY,SessionName.ToString(),EOnlineDataAdvertisementType::ViaOnlineServiceAndPing);
+	for (TTuple<FName,FString> it : CustomData)
+	{
+		SessionSettings.OnlineSessionSettings.Set(it.Key,it.Value,EOnlineDataAdvertisementType::ViaOnlineServiceAndPing);
+	}
+	
 	OnlineSessionPtr->CreateSession(0,SessionName,SessionSettings.OnlineSessionSettings);
 }
 
 
 
 /*************************************** find *************************************/
-void UKKSessionSubsystem::KK_FindSession(UObject* obj)
+void UKKSessionSubsystem::KK_FindSession(APlayerController * PlayerController,FKKOnFindSessionExec OnFindSessionFinish)
 {
-	IOnlineSubsystem * Subsystem = Online::GetSubsystem(obj->GetWorld());
+	TArray<FKKOnlineSessionSearchResult> tmp;
+	if (!PlayerController)
+	{
+		OnFindSessionFinish.ExecuteIfBound(false,tmp);
+		return;
+	}
+	IOnlineSubsystem * Subsystem = Online::GetSubsystem(PlayerController->GetWorld());
 	check(Subsystem!=nullptr)
 	IOnlineSessionPtr OnlineSessionPtr = Subsystem->GetSessionInterface();
 
 	OnlineSessionPtr->OnFindSessionsCompleteDelegates.Clear();
-	OnlineSessionPtr->OnFindSessionsCompleteDelegates.AddLambda([this,obj](bool bSuccess)
+	OnlineSessionPtr->OnFindSessionsCompleteDelegates.AddLambda([OnFindSessionFinish,this](bool bSuccess)
 	{
-		int32 num = SearchedSession->SearchResults.Num();
-		UE_LOG(LogTemp,Warning,TEXT("Search Sesseion : %s | find %d Session info"),bSuccess?TEXT("Success"):TEXT("Failed"),num);
-		KK_JoinSession(obj);
+		TArray<FKKOnlineSessionSearchResult> tmp;
+		for (FOnlineSessionSearchResult it : SearchedSession->SearchResults)
+		{
+			tmp.Add(FKKOnlineSessionSearchResult(it));
+		}
+		OnFindSessionFinish.ExecuteIfBound(bSuccess,tmp);
 	});
+	
 	SearchedSession = MakeShareable(new FOnlineSessionSearch);
 	SearchedSession->bIsLanQuery = true;
 	OnlineSessionPtr->FindSessions(0,SearchedSession.ToSharedRef());
@@ -56,32 +75,30 @@ void UKKSessionSubsystem::KK_FindSession(UObject* obj)
 
 
 /*************************************** join *************************************/
-void UKKSessionSubsystem::KK_JoinSession(UObject* obj)
+void UKKSessionSubsystem::KK_JoinSession(APlayerController * PlayerController,FKKOnSessionExec OnJoinSessionFinish)
 {
-	IOnlineSubsystem * Subsystem = Online::GetSubsystem(obj->GetWorld());
+	if (!PlayerController)
+	{
+		OnJoinSessionFinish.ExecuteIfBound(false);
+		return;
+	}
+	
+	IOnlineSubsystem * Subsystem = Online::GetSubsystem(PlayerController->GetWorld());
 	check(Subsystem!=nullptr)
 	IOnlineSessionPtr OnlineSessionPtr = Subsystem->GetSessionInterface();
 
 	if (SearchedSession->SearchResults.Num() <= 0)
 	{
+		OnJoinSessionFinish.ExecuteIfBound(false);
 		return;
 	}
 
 	OnlineSessionPtr->OnJoinSessionCompleteDelegates.Clear();
-	OnlineSessionPtr->OnJoinSessionCompleteDelegates.AddLambda([this,OnlineSessionPtr,obj](FName SessionName, EOnJoinSessionCompleteResult::Type Type)
+	OnlineSessionPtr->OnJoinSessionCompleteDelegates.AddLambda([this,OnJoinSessionFinish](FName SessionName, EOnJoinSessionCompleteResult::Type Type)
 	{
 		// save the session name to delete
 		CacheSessionName = SessionName;
-		UE_LOG(LogTemp,Warning,TEXT("Join Session [%s] [%s]"),*SessionName.ToString(),*KK_GetJoinSessionResult(Type));
-		if (Type == EOnJoinSessionCompleteResult::Success)
-		{
-			FString url;
-			if (OnlineSessionPtr->GetResolvedConnectString(SessionName,url))
-			{
-				obj->GetWorld()->GetFirstPlayerController()->ClientTravel(url,ETravelType::TRAVEL_Absolute);
-			}
-			
-		}
+		OnJoinSessionFinish.ExecuteIfBound(Type==EOnJoinSessionCompleteResult::Success);
 	});
 	
 	FString SessionName;
@@ -92,18 +109,23 @@ void UKKSessionSubsystem::KK_JoinSession(UObject* obj)
 
 
 /*************************************** destory *************************************/
-void UKKSessionSubsystem::KK_DestorySession(UObject* obj,FKKOnSessionExec OnDestorySessionFinish)
+void UKKSessionSubsystem::KK_DestorySession(APlayerController * PlayerController,FKKOnSessionExec OnDestorySessionFinish)
 {
-	IOnlineSubsystem * Subsystem = Online::GetSubsystem(obj->GetWorld());
+	if (!PlayerController)
+	{
+		OnDestorySessionFinish.ExecuteIfBound(false);
+		return;
+	}
+	
+	IOnlineSubsystem * Subsystem = Online::GetSubsystem(PlayerController->GetWorld());
 	check(Subsystem!=nullptr)
 	IOnlineSessionPtr OnlineSessionPtr = Subsystem->GetSessionInterface();
 
 	OnlineSessionPtr->OnDestroySessionCompleteDelegates.Clear();
-	
 	OnlineSessionPtr->OnDestroySessionCompleteDelegates.AddLambda([OnDestorySessionFinish](FName SessionName,bool bSuccess)
 	{
 		UE_LOG(LogTemp,Warning,TEXT("Destory [%s] [%s]"),*SessionName.ToString(),bSuccess?TEXT("Success"):TEXT("Failed"));
-		OnDestorySessionFinish.ExecuteIfBound();
+		OnDestorySessionFinish.ExecuteIfBound(bSuccess);
 	});
 	
 	OnlineSessionPtr->DestroySession(CacheSessionName);
