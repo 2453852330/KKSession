@@ -22,3 +22,10 @@ ue4 session bp lib
 Lambda绑定待解决;
 ```
 
+## 4:
+
+```
+发现使用 OnlineSessionPtr->OnJoinSessionCompleteDelegates.Clear(); 可以清除绑定的Lambda代理,所以不需要进行更新;
+同时修复了主机Session断开,客户端Session依旧存在的问题;
+```
+

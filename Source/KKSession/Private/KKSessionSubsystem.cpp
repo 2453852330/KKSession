@@ -15,6 +15,8 @@ void UKKSessionSubsystem::KK_CreateSession(UObject*obj,FName SessionName,FKKOnli
 	check(Subsystem!=nullptr)
 	IOnlineSessionPtr OnlineSessionPtr = Subsystem->GetSessionInterface();
 	
+
+	OnlineSessionPtr->OnCreateSessionCompleteDelegates.Clear();
 	// OnlineSessionPtr->AddOnCreateSessionCompleteDelegate_Handle();
 	OnlineSessionPtr->OnCreateSessionCompleteDelegates.AddLambda([OnlineSessionPtr,OnCreateSessionFinish,this](FName SessionName,bool bSuccess)
 	{
@@ -24,8 +26,6 @@ void UKKSessionSubsystem::KK_CreateSession(UObject*obj,FName SessionName,FKKOnli
 		UE_LOG(LogTemp,Warning,TEXT("/****************************************************************************/"));
 		OnCreateSessionFinish.ExecuteIfBound();
 	});
-
-	
 	
 	SessionSettings.OnlineSessionSettings.Set(SESSION_NAME_KEY,SessionName.ToString(),EOnlineDataAdvertisementType::ViaOnlineServiceAndPing);
 	OnlineSessionPtr->CreateSession(0,SessionName,SessionSettings.OnlineSessionSettings);
@@ -40,6 +40,7 @@ void UKKSessionSubsystem::KK_FindSession(UObject* obj)
 	check(Subsystem!=nullptr)
 	IOnlineSessionPtr OnlineSessionPtr = Subsystem->GetSessionInterface();
 
+	OnlineSessionPtr->OnFindSessionsCompleteDelegates.Clear();
 	OnlineSessionPtr->OnFindSessionsCompleteDelegates.AddLambda([this,obj](bool bSuccess)
 	{
 		int32 num = SearchedSession->SearchResults.Num();
@@ -66,6 +67,7 @@ void UKKSessionSubsystem::KK_JoinSession(UObject* obj)
 		return;
 	}
 
+	OnlineSessionPtr->OnJoinSessionCompleteDelegates.Clear();
 	OnlineSessionPtr->OnJoinSessionCompleteDelegates.AddLambda([this,OnlineSessionPtr,obj](FName SessionName, EOnJoinSessionCompleteResult::Type Type)
 	{
 		// save the session name to delete
@@ -96,19 +98,14 @@ void UKKSessionSubsystem::KK_DestorySession(UObject* obj,FKKOnSessionExec OnDest
 	check(Subsystem!=nullptr)
 	IOnlineSessionPtr OnlineSessionPtr = Subsystem->GetSessionInterface();
 
+	OnlineSessionPtr->OnDestroySessionCompleteDelegates.Clear();
+	
 	OnlineSessionPtr->OnDestroySessionCompleteDelegates.AddLambda([OnDestorySessionFinish](FName SessionName,bool bSuccess)
 	{
 		UE_LOG(LogTemp,Warning,TEXT("Destory [%s] [%s]"),*SessionName.ToString(),bSuccess?TEXT("Success"):TEXT("Failed"));
 		OnDestorySessionFinish.ExecuteIfBound();
 	});
-
-	// DumpSession(OnlineSessionPtr->GetNamedSession(CacheSessionName));
-
-	// this return [GameSession]
-	UE_LOG(LogTemp,Warning,TEXT("try find session name in player state : %s"),*(GetWorld()->GetFirstPlayerController()->PlayerState->SessionName.ToString()));
-	// this return [GameSession]
-	UE_LOG(LogTemp,Warning,TEXT("try find session name in game session : %s"),*(GetWorld()->GetAuthGameMode()->GameSession->SessionName.ToString()));
-	// 
+	
 	OnlineSessionPtr->DestroySession(CacheSessionName);
 }
 

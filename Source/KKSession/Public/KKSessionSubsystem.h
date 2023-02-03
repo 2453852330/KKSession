@@ -25,6 +25,7 @@ public:
 	void KK_CreateSession(UObject*obj,FName SessionName,FKKOnlineSessionSettings SessionSettings,FKKOnSessionExec OnCreateSessionFinish);
 
 	
+	
 	/*************************************** find *************************************/
 	UFUNCTION(BlueprintCallable,Category="KKSession",meta=(WorldContext=obj))
 	void KK_FindSession(UObject*obj);
