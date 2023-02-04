@@ -24,30 +24,65 @@ class KKSESSION_API UKKSessionSubsystem : public UGameInstanceSubsystem
 public:
 	/*************************************** create *************************************/
 	UFUNCTION(BlueprintCallable,Category="KKSession",meta=(AutoCreateRefTerm="CustomData"))
-	void KK_CreateSession(APlayerController * PlayerController ,FName SessionName,TMap<FName,FString> CustomData ,FKKOnlineSessionSettings SessionSettings,FKKOnSessionExec OnCreateSessionFinish);
+	void KK_CreateSession(APlayerController * PlayerController,TMap<FName,FString> CustomData ,FKKOnlineSessionSettings SessionSettings,FKKOnSessionExec OnCreateSessionFinish);
 
 	
 	/*************************************** find *************************************/
 	UFUNCTION(BlueprintCallable,Category="KKSession")
-	void KK_FindSession(APlayerController * PlayerController,FKKOnFindSessionExec OnFindSessionFinish);
+	void KK_FindSession(APlayerController * PlayerController,FKKOnlineSearchParam OnlineSearchParam,FKKOnFindSessionExec OnFindSessionFinish);
 
 	TSharedPtr<FOnlineSessionSearch> SearchedSession;
 
 	/*************************************** join *************************************/
 	UFUNCTION(BlueprintCallable,Category="KKSession")
-	void KK_JoinSession(APlayerController * PlayerController,FKKOnSessionExec OnJoinSessionFinish);
+	void KK_JoinSession(APlayerController * PlayerController,FKKOnlineSessionSearchResult OnlineSessionSearchResult,FKKOnSessionExec OnJoinSessionFinish);
 
 	/*************************************** destory *************************************/
 	UFUNCTION(BlueprintCallable,Category="KKSession")
 	void KK_DestorySession(APlayerController * PlayerController,FKKOnSessionExec OnDestorySessionFinish);
-
-
-	/*************************************** travel *************************************/
 	
+	/*************************************** start session*************************************/
+	UFUNCTION(BlueprintCallable,Category="KKSession")
+	void KK_StartSession(APlayerController * PlayerController,FKKOnSessionExec OnStartSessionFinish);
+
+	/*************************************** end session *************************************/
+	UFUNCTION(BlueprintCallable,Category="KKSession")
+	void KK_EndSession(APlayerController * PlayerController,FKKOnSessionExec OnEndSessionFinish);
+	
+	/*************************************** update session *************************************/
+	UFUNCTION(BlueprintCallable,Category="KKSession")
+	void KK_UpdateSession(APlayerController * PlayerController,FKKOnlineSessionSettings OnlineSessionSettings, FKKOnSessionExec OnUpdateSessionFinish);
+	
+	/*************************************** travel *************************************/
+	UFUNCTION(BlueprintCallable,Category="KKSession")
+	void KK_ClientTravel(APlayerController * PlayerController);
+	
+	/*************************************** get session info *************************************/
+	UFUNCTION(BlueprintCallable,BlueprintPure,Category="KKSession|Get")
+	static FString KK_GetSessionInfo(UPARAM(ref) const FKKOnlineSessionSearchResult & SessionSearchResult);
+
+	UFUNCTION(BlueprintCallable,BlueprintPure,Category="KKSession|Get")
+	static FString KK_GetSessionUserName(UPARAM(ref) const FKKOnlineSessionSearchResult & SessionSearchResult);
+
+	UFUNCTION(BlueprintCallable,BlueprintPure,Category="KKSession|Get")
+	static int32 KK_GetSessionPing(UPARAM(ref) const FKKOnlineSessionSearchResult & SessionSearchResult);
+
+	UFUNCTION(BlueprintCallable,BlueprintPure,Category="KKSession|Get")
+	static int32 KK_GetSessionMaxPlayerNum(UPARAM(ref) const FKKOnlineSessionSearchResult & SessionSearchResult);
+
+	UFUNCTION(BlueprintCallable,BlueprintPure,Category="KKSession|Get")
+	static int32 KK_GetSessionCurrentPlayerNum(UPARAM(ref) const FKKOnlineSessionSearchResult & SessionSearchResult);
+
+	UFUNCTION(BlueprintCallable,BlueprintPure,Category="KKSession|Get")
+	static FString KK_GetSessionCustomData(UPARAM(ref) const FKKOnlineSessionSearchResult & SessionSearchResult,FName KeyName);
 private:
 	/*************************************** helper *************************************/
 	FString KK_GetJoinSessionResult(EOnJoinSessionCompleteResult::Type Type);
-
+	
 	/*************************************** cache info *************************************/
 	FName CacheSessionName;
+
+	/*************************************** make session settings *************************************/
+	FOnlineSessionSettings Kk_MakeOnlineSessionSettings(FKKOnlineSessionSettings KKOnlineSessionSettings);
 };
+

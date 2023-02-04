@@ -6,7 +6,8 @@ USTRUCT(BlueprintType)
 struct FKKOnlineSessionSettings
 {
 	GENERATED_USTRUCT_BODY()
-
+	UPROPERTY(EditAnywhere,BlueprintReadWrite)
+	FName SessionName;
 	// 公布的公开可用连接数
 	UPROPERTY(EditAnywhere,BlueprintReadWrite)
 	int32 PublicConnectionsNum;
@@ -58,22 +59,7 @@ struct FKKOnlineSessionSettings
 		bAllowJoinViaPresence = true;
 		bAllowJoinViaPresenceFriendsOnly = false;
 		bAntiCheatProtected = false;
-
-		OnlineSessionSettings.NumPublicConnections = PublicConnectionsNum;
-		OnlineSessionSettings.NumPrivateConnections = PrivateConnectionsNum;
-		OnlineSessionSettings.bShouldAdvertise = bShouldAdvertise;
-		OnlineSessionSettings.bAllowJoinInProgress = bAllowJoinInProgress;
-		OnlineSessionSettings.bIsLANMatch = bIsLANMatch;
-		OnlineSessionSettings.bIsDedicated = bIsDedicated;
-		OnlineSessionSettings.bUsesStats = bUsesStats;
-		OnlineSessionSettings.bAllowInvites = bAllowInvites;
-		OnlineSessionSettings.bUsesPresence = bUsesPresence;
-		OnlineSessionSettings.bAllowJoinViaPresence = bAllowJoinViaPresence;
-		OnlineSessionSettings.bAllowJoinViaPresenceFriendsOnly = bAllowJoinViaPresenceFriendsOnly;
-		OnlineSessionSettings.bAntiCheatProtected = bAntiCheatProtected;
 	}
-	
-	FOnlineSessionSettings OnlineSessionSettings;
 };
 
 USTRUCT(BlueprintType)
@@ -84,4 +70,22 @@ struct FKKOnlineSessionSearchResult
 
 	FKKOnlineSessionSearchResult(){}
 	FKKOnlineSessionSearchResult(FOnlineSessionSearchResult InOnlineSessionSearchResult):SearchResult(InOnlineSessionSearchResult){}
+};
+
+
+USTRUCT(BlueprintType)
+struct FKKOnlineSearchParam
+{
+	GENERATED_USTRUCT_BODY()
+
+	UPROPERTY(EditAnywhere,BlueprintReadWrite)
+	bool bLAN;
+	UPROPERTY(EditAnywhere,BlueprintReadWrite)
+	int32 MaxSearchResults;
+	UPROPERTY(EditAnywhere,BlueprintReadWrite)
+	float SearchTimeOut;
+	// 暂时不添加过滤
+	UPROPERTY(EditAnywhere,BlueprintReadWrite)
+	TArray<FString> Filter;
+	FKKOnlineSearchParam():bLAN(true),MaxSearchResults(0),SearchTimeOut(10.f){}
 };
