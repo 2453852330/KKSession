@@ -56,7 +56,7 @@ Lambda绑定待解决;
 https://nerivec.github.io/old-ue4-wiki/pages/online-multiplayer.html
 ```
 
-StartSession:
+### StartSession:
 
 ```
 您可以并且通常应该向子系统发出信号，表明比赛已经开始，以防您不想列出正在进行的游戏或只列出正在进行的游戏。
@@ -77,7 +77,15 @@ for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator
 }
 ```
 
-EndSession:
+测试:
+
+```
+如果StartSession()之后,bAllowJoinInProgress为false的Session将不会被搜到到;
+```
+
+
+
+### EndSession:
 
 ```
 结束会话是通知子系统匹配已结束的操作。在这方面，它与开始会话相反。比赛结束后，游戏模式调用 GameSession->HandleMatchHasEnded（）; 这意味着在你的游戏会话子类中，你应该覆盖 void HandleMatchHasEnded（）。
