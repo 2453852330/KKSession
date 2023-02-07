@@ -75,6 +75,10 @@ public:
 
 	UFUNCTION(BlueprintCallable,BlueprintPure,Category="KKSession|Get")
 	static FString KK_GetSessionCustomData(UPARAM(ref) const FKKOnlineSessionSearchResult & SessionSearchResult,FName KeyName);
+
+	/*************************************** debug *************************************/
+	UFUNCTION(BlueprintCallable,Category="KKSession|Debug")
+	static void KK_DebugSessionInfo(APlayerController * PlayerController);
 private:
 	/*************************************** helper *************************************/
 	FString KK_GetJoinSessionResult(EOnJoinSessionCompleteResult::Type Type);

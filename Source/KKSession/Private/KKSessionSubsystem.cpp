@@ -83,7 +83,8 @@ void UKKSessionSubsystem::KK_FindSession(APlayerController * PlayerController,FK
 	SearchedSession = MakeShareable(new FOnlineSessionSearch);
 	SearchedSession->bIsLanQuery = OnlineSearchParam.bLAN;
 	SearchedSession->MaxSearchResults = OnlineSearchParam.MaxSearchResults;
-	
+	SearchedSession->PingBucketSize = OnlineSearchParam.PingBucketSize;
+	SearchedSession->TimeoutInSeconds = OnlineSearchParam.SearchTimeOut;
 	// 对局域网无效,所以直接对搜索结果过滤完事;
 	// SearchedSession->QuerySettings.Set(SEARCH_KEYWORDS,OnlineSearchParam.Filter[0],EOnlineComparisonOp::Equals);
 	OnlineSessionPtr->FindSessions(0,SearchedSession.ToSharedRef());
@@ -138,6 +139,21 @@ void UKKSessionSubsystem::KK_DestorySession(APlayerController * PlayerController
 	IOnlineSubsystem * Subsystem = Online::GetSubsystem(PlayerController->GetWorld());
 	check(Subsystem!=nullptr)
 	IOnlineSessionPtr OnlineSessionPtr = Subsystem->GetSessionInterface();
+
+	if (CacheSessionName.IsNone())
+	{
+		UE_LOG(LogTemp,Warning,TEXT("CacheSessionName is none , cant destory"));
+		OnDestorySessionFinish.ExecuteIfBound(false);
+		return;
+	}
+	
+	FNamedOnlineSession * find_session = OnlineSessionPtr->GetNamedSession(CacheSessionName);
+	if (!find_session)
+	{
+		UE_LOG(LogTemp,Warning,TEXT("cant find [%s] session , destory failed"),*CacheSessionName.ToString());
+		OnDestorySessionFinish.ExecuteIfBound(false);
+		return;
+	}
 	
 	OnlineSessionPtr->OnDestroySessionCompleteDelegates.Clear();
 	OnlineSessionPtr->OnDestroySessionCompleteDelegates.AddLambda([OnDestorySessionFinish](FName SessionName,bool bSuccess)
@@ -145,7 +161,6 @@ void UKKSessionSubsystem::KK_DestorySession(APlayerController * PlayerController
 		UE_LOG(LogTemp,Warning,TEXT("Destory [%s] [%s]"),*SessionName.ToString(),bSuccess?TEXT("Success"):TEXT("Failed"));
 		OnDestorySessionFinish.ExecuteIfBound(bSuccess);
 	});
-	
 	OnlineSessionPtr->DestroySession(CacheSessionName);
 }
 
@@ -255,6 +270,32 @@ FString UKKSessionSubsystem::KK_GetSessionCustomData(const FKKOnlineSessionSearc
 	FString tmp;
 	SessionSearchResult.SearchResult.Session.SessionSettings.Get(KeyName,tmp);
 	return tmp;
+}
+
+/*************************************** debug *************************************/
+void UKKSessionSubsystem::KK_DebugSessionInfo(APlayerController* PlayerController)
+{
+	if (!PlayerController)
+	{
+		return;
+	}
+	UE_LOG(LogTemp,Warning,TEXT("/*************************************** debug session info *************************************/"));
+	if (PlayerController->IsLocalPlayerController())
+	{
+		UE_LOG(LogTemp,Warning,TEXT("player controller is local player controller"));
+		IOnlineSubsystem * Subsystem = Online::GetSubsystem(PlayerController->GetWorld());
+		check(Subsystem!=nullptr)
+		IOnlineSessionPtr OnlineSessionPtr = Subsystem->GetSessionInterface();
+		OnlineSessionPtr->DumpSessionState();
+	}
+	else 
+	{
+		UE_LOG(LogTemp,Warning,TEXT("player controller is not local player controller"));
+		IOnlineSubsystem * Subsystem = Online::GetSubsystem(PlayerController->GetWorld());
+		check(Subsystem!=nullptr)
+		IOnlineSessionPtr OnlineSessionPtr = Subsystem->GetSessionInterface();
+		OnlineSessionPtr->DumpSessionState();
+	}
 }
 
 /*************************************** helper *************************************/

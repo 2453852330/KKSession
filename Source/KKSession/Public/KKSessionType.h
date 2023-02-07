@@ -84,8 +84,10 @@ struct FKKOnlineSearchParam
 	int32 MaxSearchResults;
 	UPROPERTY(EditAnywhere,BlueprintReadWrite)
 	float SearchTimeOut;
+	UPROPERTY(EditAnywhere,BlueprintReadWrite)
+	int32 PingBucketSize;
 	// 暂时不添加过滤
 	UPROPERTY(EditAnywhere,BlueprintReadWrite)
 	TArray<FString> Filter;
-	FKKOnlineSearchParam():bLAN(true),MaxSearchResults(0),SearchTimeOut(10.f){}
+	FKKOnlineSearchParam():bLAN(true),MaxSearchResults(0),SearchTimeOut(10.f),PingBucketSize(0){}
 };
