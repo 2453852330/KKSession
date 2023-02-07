@@ -110,10 +110,18 @@ void UKKSessionSubsystem::KK_JoinSession(APlayerController * PlayerController,FK
 		CacheSessionName = SessionName;
 		OnJoinSessionFinish.ExecuteIfBound(Type==EOnJoinSessionCompleteResult::Success);
 	});
-	
-	FString SessionName;
-	OnlineSessionSearchResult.SearchResult.Session.SessionSettings.Get(SESSION_NAME_KEY,SessionName);
-	OnlineSessionPtr->JoinSession(0,FName(*SessionName),OnlineSessionSearchResult.SearchResult);
+
+	// fix the session name is not right:
+	if (OnlineSessionSearchResult.SearchResult.Session.SessionSettings.bIsLANMatch)
+	{
+		OnlineSessionPtr->JoinSession(0,NAME_GameSession,OnlineSessionSearchResult.SearchResult);
+	}
+	else
+	{
+		FString SessionName;
+		OnlineSessionSearchResult.SearchResult.Session.SessionSettings.Get(SESSION_NAME_KEY,SessionName);
+		OnlineSessionPtr->JoinSession(0,FName(*SessionName),OnlineSessionSearchResult.SearchResult);
+	}
 }
 
 
