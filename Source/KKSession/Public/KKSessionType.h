@@ -6,8 +6,6 @@ USTRUCT(BlueprintType)
 struct FKKOnlineSessionSettings
 {
 	GENERATED_USTRUCT_BODY()
-	UPROPERTY(EditAnywhere,BlueprintReadWrite)
-	FName SessionName;
 	// 公布的公开可用连接数
 	UPROPERTY(EditAnywhere,BlueprintReadWrite)
 	int32 PublicConnectionsNum;

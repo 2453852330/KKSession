@@ -126,3 +126,12 @@ if(Session.IsValid())
 }
 ```
 
+## SessionName
+
+自定义SessionName,需要自定处理Name的状态,比如自行保存;所以建议直接使用常量SessionName;
+
+## Note
+
+```
+对于SessionSearchResult,可以不用封装结果,直接封装Index即可;
+```

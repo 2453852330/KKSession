@@ -83,9 +83,7 @@ private:
 	/*************************************** helper *************************************/
 	FString KK_GetJoinSessionResult(EOnJoinSessionCompleteResult::Type Type);
 	
-	/*************************************** cache info *************************************/
-	FName CacheSessionName;
-
+	
 	/*************************************** make session settings *************************************/
 	FOnlineSessionSettings Kk_MakeOnlineSessionSettings(FKKOnlineSessionSettings KKOnlineSessionSettings);
 };

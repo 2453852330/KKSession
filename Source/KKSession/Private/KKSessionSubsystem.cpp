@@ -4,9 +4,9 @@
 #include "KKSessionSubsystem.h"
 #include "OnlineSubsystemUtils.h"
 #include "GameFramework/GameModeBase.h"
-#include "GameFramework/GameSession.h"
 
-#define SESSION_NAME_KEY TEXT("SESSION_NAME_KEY")
+
+
 
 /*************************************** create *************************************/
 void UKKSessionSubsystem::KK_CreateSession(APlayerController * PlayerController,TMap<FName,FString> CustomData,FKKOnlineSessionSettings SessionSettings,FKKOnSessionExec OnCreateSessionFinish)
@@ -25,18 +25,12 @@ void UKKSessionSubsystem::KK_CreateSession(APlayerController * PlayerController,
 	// OnlineSessionPtr->AddOnCreateSessionCompleteDelegate_Handle();
 	OnlineSessionPtr->OnCreateSessionCompleteDelegates.AddLambda([OnlineSessionPtr,OnCreateSessionFinish,this](FName SessionName,bool bSuccess)
 	{
-		// cache session name 
-		CacheSessionName = SessionName;
 		// Debug Session
 		OnlineSessionPtr->DumpSessionState();
-		
 		OnCreateSessionFinish.ExecuteIfBound(bSuccess);
 	});
 	
 	FOnlineSessionSettings OnlineSessionSettings = Kk_MakeOnlineSessionSettings(SessionSettings);
-	
-	// add custom data
-	OnlineSessionSettings.Set(SESSION_NAME_KEY,SessionSettings.SessionName.ToString(),EOnlineDataAdvertisementType::ViaOnlineServiceAndPing);
 	
 	for (TTuple<FName,FString> it : CustomData)
 	{
@@ -47,7 +41,8 @@ void UKKSessionSubsystem::KK_CreateSession(APlayerController * PlayerController,
 	// OnlineSessionSettings.Set(SEARCH_KEYWORDS,FString(TEXT("QWER")),EOnlineDataAdvertisementType::ViaOnlineServiceAndPing);
 	
 	// 因为局域网必须使用 NAME_GameSession,不然无法获取正确的人数;
-	OnlineSessionPtr->CreateSession(0,SessionSettings.bIsLANMatch?NAME_GameSession:SessionSettings.SessionName,OnlineSessionSettings);
+	// 更新为: 不允许自定义SessionName
+	OnlineSessionPtr->CreateSession(0,NAME_GameSession,OnlineSessionSettings);
 	
 }
 
@@ -107,22 +102,12 @@ void UKKSessionSubsystem::KK_JoinSession(APlayerController * PlayerController,FK
 	OnlineSessionPtr->OnJoinSessionCompleteDelegates.Clear();
 	OnlineSessionPtr->OnJoinSessionCompleteDelegates.AddLambda([this,OnJoinSessionFinish](FName SessionName, EOnJoinSessionCompleteResult::Type Type)
 	{
-		// save the session name to delete
-		CacheSessionName = SessionName;
 		OnJoinSessionFinish.ExecuteIfBound(Type==EOnJoinSessionCompleteResult::Success);
 	});
 
 	// fix the session name is not right:
-	if (OnlineSessionSearchResult.SearchResult.Session.SessionSettings.bIsLANMatch)
-	{
-		OnlineSessionPtr->JoinSession(0,NAME_GameSession,OnlineSessionSearchResult.SearchResult);
-	}
-	else
-	{
-		FString SessionName;
-		OnlineSessionSearchResult.SearchResult.Session.SessionSettings.Get(SESSION_NAME_KEY,SessionName);
-		OnlineSessionPtr->JoinSession(0,FName(*SessionName),OnlineSessionSearchResult.SearchResult);
-	}
+	// 更新为: 直接使用 NAME_GameSession
+	OnlineSessionPtr->JoinSession(0,NAME_GameSession,OnlineSessionSearchResult.SearchResult);
 }
 
 
@@ -140,20 +125,7 @@ void UKKSessionSubsystem::KK_DestorySession(APlayerController * PlayerController
 	check(Subsystem!=nullptr)
 	IOnlineSessionPtr OnlineSessionPtr = Subsystem->GetSessionInterface();
 
-	if (CacheSessionName.IsNone())
-	{
-		UE_LOG(LogTemp,Warning,TEXT("CacheSessionName is none , cant destory"));
-		OnDestorySessionFinish.ExecuteIfBound(false);
-		return;
-	}
 	
-	FNamedOnlineSession * find_session = OnlineSessionPtr->GetNamedSession(CacheSessionName);
-	if (!find_session)
-	{
-		UE_LOG(LogTemp,Warning,TEXT("cant find [%s] session , destory failed"),*CacheSessionName.ToString());
-		OnDestorySessionFinish.ExecuteIfBound(false);
-		return;
-	}
 	
 	OnlineSessionPtr->OnDestroySessionCompleteDelegates.Clear();
 	OnlineSessionPtr->OnDestroySessionCompleteDelegates.AddLambda([OnDestorySessionFinish](FName SessionName,bool bSuccess)
@@ -161,7 +133,7 @@ void UKKSessionSubsystem::KK_DestorySession(APlayerController * PlayerController
 		UE_LOG(LogTemp,Warning,TEXT("Destory [%s] [%s]"),*SessionName.ToString(),bSuccess?TEXT("Success"):TEXT("Failed"));
 		OnDestorySessionFinish.ExecuteIfBound(bSuccess);
 	});
-	OnlineSessionPtr->DestroySession(CacheSessionName);
+	OnlineSessionPtr->DestroySession(NAME_GameSession);
 }
 
 /*************************************** start session *************************************/
@@ -181,7 +153,7 @@ void UKKSessionSubsystem::KK_StartSession(APlayerController* PlayerController,FK
 	{
 		OnStartSessionFinish.ExecuteIfBound(bSuccess);
 	});
-	OnlineSessionPtr->StartSession(CacheSessionName);
+	OnlineSessionPtr->StartSession(NAME_GameSession);
 }
 /*************************************** end session *************************************/
 void UKKSessionSubsystem::KK_EndSession(APlayerController* PlayerController, FKKOnSessionExec OnEndSessionFinish)
@@ -200,7 +172,7 @@ void UKKSessionSubsystem::KK_EndSession(APlayerController* PlayerController, FKK
 	{
 		OnEndSessionFinish.ExecuteIfBound(bSuccess);
 	});
-	OnlineSessionPtr->EndSession(CacheSessionName);
+	OnlineSessionPtr->EndSession(NAME_GameSession);
 }
 
 /*************************************** update session *************************************/
@@ -221,7 +193,7 @@ void UKKSessionSubsystem::KK_UpdateSession(APlayerController* PlayerController,F
 		OnUpdateSessionFinish.ExecuteIfBound(bSuccess);
 	});
 	FOnlineSessionSettings tmp = Kk_MakeOnlineSessionSettings(OnlineSessionSettings);
-	OnlineSessionPtr->UpdateSession(CacheSessionName,tmp);
+	OnlineSessionPtr->UpdateSession(NAME_GameSession,tmp);
 }
 
 /*************************************** travel *************************************/
@@ -235,7 +207,7 @@ void UKKSessionSubsystem::KK_ClientTravel(APlayerController * PlayerController)
 	check(Subsystem!=nullptr)
 	IOnlineSessionPtr OnlineSessionPtr = Subsystem->GetSessionInterface();
 	FString url;
-	OnlineSessionPtr->GetResolvedConnectString(CacheSessionName,url);
+	OnlineSessionPtr->GetResolvedConnectString(NAME_GameSession,url);
 	PlayerController->ClientTravel(url,ETravelType::TRAVEL_Absolute);
 }
 
